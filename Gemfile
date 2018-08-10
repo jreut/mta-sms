@@ -8,3 +8,6 @@ git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
 # Added at 2018-08-10 13:21:41 -0400 by jreut:
 gem "nokogiri", "~> 1.8"
+
+# Added at 2018-08-10 16:30:29 -0400 by jreut:
+gem "rack", "~> 2.0"
