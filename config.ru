@@ -1,5 +1,5 @@
 $LOAD_PATH.unshift __dir__
 
-require 'server'
+require 'app'
 
-run Server.new
+run App.freeze.app
