@@ -1,7 +1,9 @@
 require 'logger'
 
-require 'tzinfo'
 require 'roda'
+require 'tzinfo'
+
+require 'timetable_presenter'
 
 if ENV['ONLINE']
   require 'scrape'
@@ -26,35 +28,19 @@ class App < Roda
           destination: r.params['destination'],
           time: @now,
         )
-        times = timetable[:times]
-          .select { |t| t[:start] >= @now }
-          .sort_by { |t| t[:start] }
-        ([
-          "#{timetable[:from]} -> #{timetable[:to]}\n",
-          @now.strftime("around %H:%M on %a %e %b\n")
-        ] + times.map do |time|
-          "#{time[:start].strftime('%H:%M')} -> #{time[:stop].strftime('%H:%M')}\n"
-        end).join
+        TimetablePresenter.new(timetable: timetable, now: @now).call
       end
 
       r.post 'twilio' do
         response['Content-Type'] = 'text/plain'
-        origin, destination = r.params['Body'].split(%r{to|/|->}).map(&:strip)
+        origin, destination = r.params['Body'].split(%r{[^[:alnum:][:space:]]+}).map(&:strip)
         timetable = TIMETABLE.(
           origin: origin,
           destination: destination,
           time: @now,
         )
         response.status = 200
-        times = timetable[:times]
-          .select { |t| t[:start] >= @now }
-          .sort_by { |t| t[:start] }
-        ([
-          "#{timetable[:from]} -> #{timetable[:to]}\n",
-          @now.strftime("around %H:%M on %a %e %b\n")
-        ] + times.map do |time|
-          "#{time[:start].strftime('%H:%M')} -> #{time[:stop].strftime('%H:%M')}\n"
-        end).join
+        TimetablePresenter.new(timetable: timetable, now: @now).call
       end
     end
   end
