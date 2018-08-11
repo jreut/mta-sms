@@ -1,0 +1,33 @@
+= mta-sms
+
+== DESCRIPTION
+
+mta-sms is an HTTP server with a Twilio SMS endpoint that looks up MTA Metro-North Railroad timetables.
+
+== SYNOPSIS
+
+Run the server with <tt>rackup</tt>
+
+  ONLINE=true bundle exec rackup
+
+== ROUTES
+
+=== <tt>POST /search/twilio</tt>
+
+This endpoint is a webhook for Twilio incoming messages
+(https://www.twilio.com/docs/sms/twiml). Right now, this endpoint only inspects
+the <tt>Body</tt> parameter. The message body should contain two Metro-North station
+names separated by a non-alphanumeric character. For example, this cURL command
+line is well-formed:
+
+  curl localhost/search/twilio --data 'Body=ludlow / spuyten duyvil'
+
+This endpoint does some basic fuzzy searching of the station names given on
+this MTA Web page: http://as0.mta.info/mnr/schedules/sched_form.cfm, so you
+could do something like <tt>'Body=ludl / spn dvl'</tt>.
+
+== ENVIRONMENT
+
+  ONLINE
+    if truthy, use the real MTA Web site to scrape timetables. else, use a
+    dummy timetable
