@@ -7,11 +7,17 @@ require 'prefix_checker'
 
 class Scrape
   def get
+    return @dict if instance_variable_defined? :@dict
     uri = URI('http://as0.mta.info/mnr/schedules/sched_form.cfm')
     body = Net::HTTP.get(uri)
     doc = Nokogiri::HTML(body)
     xpath = '//*[@id="Vorig_station"]'
-    doc.xpath(xpath+'/option').each_with_object({}){|option, hash| hash[option.text]=option['value'].to_i}
+    @dict = doc
+      .xpath(xpath+'/option')
+      .each_with_object({}) do |option, hash|
+        hash[option.text] = option['value']
+      end
+    @dict
   end
 
   def post(from: 1, to: 14, time: Time.now)
