@@ -1,7 +1,7 @@
 require 'uri'
 require 'json'
 
-if ENV['ONLINE'] == 'true'
+if ENV['ONLINE']
   require 'scrape'
   TIMETABLE = Scrape.new
 else

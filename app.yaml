@@ -1,0 +1,5 @@
+runtime: ruby
+env: flex
+entrypoint: bundle exec rackup -s Puma -p $PORT
+env_variables:
+  ONLINE: true
