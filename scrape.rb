@@ -41,7 +41,7 @@ class Scrape
   def table(body)
     Nokogiri::HTML(body)
       .xpath('/html/body/div/div[3]/form[2]/div[3]/table[2]/tr')
-      .drop(1)
+      .drop(1) # the table's header is a <tr>
       .map do |tr|
         start, _, stop = tr.xpath('td')
         if start.nil? or stop.nil?
