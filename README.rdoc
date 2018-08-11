@@ -32,6 +32,15 @@ could do something like <tt>'Body=ludl / spn dvl'</tt>.
     if truthy, use the real MTA Web site to scrape timetables. else, use a
     dummy timetable
 
+== WHY
+
+I use a phone that only has voice, SMS and bad MMS. The MTA has a rich SMS
+interface for the bus system at http://bustime.mta.info/wiki/Help/SMSSearching,
+but it doesn't seem to have one for anything else.
+
+This code scrapes HTML pages. I tried to find a GTFS API, but even with an MTA
+developer account I haven't been able to access any Metro-North data.
+
 == TODO
 
 - make fuzzy station searching real, ie. maybe use something a little better than the <tt>did_you_mean</tt> gem
@@ -43,3 +52,5 @@ could do something like <tt>'Body=ludl / spn dvl'</tt>.
 - add a "favorites" feature so you don't have to type over and over again, ideally you could say, "inbound" or "outbound" and get your desired station pairs
 
 - allow searching arbitrary times in the future
+
+- use a programmatic API instead of scraping HTML
