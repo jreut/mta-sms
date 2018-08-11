@@ -1,3 +1,5 @@
-require_relative 'server'
+$LOAD_PATH.unshift __dir__
+
+require 'server'
 
 run Server.new

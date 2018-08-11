@@ -39,7 +39,10 @@ class Scrape
         if start.nil? or stop.nil?
           nil
         else
-          "start: #{start.content.strip}, end: #{stop.content.strip}"
+          {
+            start: Time.strptime(start.content.strip, '%I:%M %p'),
+            stop: Time.strptime(stop.content.strip, '%I:%M %p'),
+          }
         end
       end
       .compact
@@ -53,7 +56,12 @@ class Scrape
       nil
     else
       response = post from: origin_id, to: destination_id, time: time
-      table response.body
+      times = table response.body
+      {
+        from: origin.upcase,
+        to: destination.upcase,
+        times: times,
+      }
     end
   end
 end
