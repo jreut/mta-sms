@@ -3,6 +3,8 @@
 require 'net/http'
 require 'nokogiri'
 
+require 'prefix_checker'
+
 class Scrape
   def get
     uri = URI('http://as0.mta.info/mnr/schedules/sched_form.cfm')
@@ -50,16 +52,19 @@ class Scrape
 
   def call(origin:, destination:, time: DateTime.now)
     hash = get
-    origin_id = hash[origin.upcase]
-    destination_id = hash[destination.upcase]
+    checker = PrefixChecker.new dictionary: hash.keys
+    corrected_origin = checker.correct(origin.upcase).first
+    corrected_destination = checker.correct(destination.upcase).first
+    origin_id = hash[corrected_origin]
+    destination_id = hash[corrected_destination]
     if origin_id.nil? or destination_id.nil?
       nil
     else
       response = post from: origin_id, to: destination_id, time: time
       times = table response.body
       {
-        from: origin.upcase,
-        to: destination.upcase,
+        from: corrected_origin,
+        to: corrected_destination,
         times: times,
       }
     end
