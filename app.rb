@@ -1,5 +1,7 @@
-require 'roda'
 require 'logger'
+
+require 'tzinfo'
+require 'roda'
 
 if ENV['ONLINE']
   require 'scrape'
@@ -14,7 +16,9 @@ class App < Roda
     @logger = Logger.new(STDERR)
 
     r.on 'search' do
-      @now = Time.now
+      # the MTA Web site always expects this time zone
+      tz = TZInfo::Timezone.get 'America/New_York'
+      @now = tz.utc_to_local Time.now.utc
 
       r.get do
         timetable = TIMETABLE.(

@@ -12,10 +12,13 @@ GEM
     rack (2.0.5)
     roda (3.10.0)
       rack
+    thread_safe (0.3.6)
     twilio-ruby (5.12.1)
       faraday (~> 0.9)
       jwt (>= 1.5, <= 2.5)
       nokogiri (>= 1.6, < 2.0)
+    tzinfo (1.2.5)
+      thread_safe (~> 0.1)
 
 PLATFORMS
   ruby
@@ -25,6 +28,7 @@ DEPENDENCIES
   puma
   roda (~> 3.10)
   twilio-ruby (~> 5.12)
+  tzinfo (~> 1.2)
 
 BUNDLED WITH
    1.16.1
