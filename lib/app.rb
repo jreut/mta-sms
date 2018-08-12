@@ -24,7 +24,7 @@ class App < Roda
 
       r.post 'twilio' do
         response['Content-Type'] = 'text/plain'
-        origin, destination = r.params['Body'].split(%r{[^[:alnum:][:space:]]+}).map(&:strip)
+        origin, destination = r.params['Body'].split(%r{[./]}).map(&:strip)
         TIMETABLE.(
           origin: origin, destination: destination,
           time: @now,
