@@ -48,7 +48,7 @@ pair that was saved.
 
 === RetrieveFavorite
 
-The message body should either be the word <tt>'in'</out> or <tt>'out'</tt>.
+The message body should either be the word <tt>'in'</tt> or <tt>'out'</tt>.
 This intent looks up a previously-saved station pair by the <tt>Sender</tt>
 request parameter and executes the Search intent on it. If the body is
 <tt>'in'</tt>, the search is performed using the order in which the favorite
@@ -75,9 +75,10 @@ For example:
 
 == ENVIRONMENT
 
-  ONLINE
-    if truthy, use the real MTA Web site to scrape timetables. else, use a
-    dummy timetable
+[ONLINE]
+
+  if truthy, use the real MTA Web site to scrape timetables. else, use a dummy
+  timetable
 
 == WHY
 
