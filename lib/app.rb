@@ -16,8 +16,8 @@ FAVORITES = {}
 
 if ENV['ONLINE']
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (truthy)")
-  SOURCE = Scrape.new logger: LOGGER, stations: @stations
   STATIONS = StationList.new(logger: LOGGER).call.value_or { {} }
+  SOURCE = Scrape.new logger: LOGGER, stations: STATIONS
 else
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (falsy)")
   SOURCE = DummyTimetable.new
