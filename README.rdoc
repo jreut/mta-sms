@@ -43,8 +43,6 @@ developer account I haven't been able to access any Metro-North data.
 
 == TODO
 
-- make fuzzy station searching real, ie. maybe use something a little better than the <tt>did_you_mean</tt> gem
-
 - rate limit by phone number
 
 - add a "favorites" feature so you don't have to type over and over again, ideally you could say, "inbound" or "outbound" and get your desired station pairs

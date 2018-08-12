@@ -3,7 +3,7 @@
 require 'nokogiri'
 require 'dry/monads/result'
 
-require 'prefix_checker'
+require 'fuzzy'
 require 'http'
 
 class Scrape
@@ -15,9 +15,9 @@ class Scrape
 
   def call(origin:, destination:, time:)
     retrieve_station_list.bind do |hash|
-      checker = PrefixChecker.new dictionary: hash.keys
-      checker.(origin.upcase).bind do |origin_|
-        checker.(destination.upcase).bind do |destination_|
+      haystack = Fuzzy.new strings: hash.keys
+      haystack.(origin).bind do |origin_|
+        haystack.(destination).bind do |destination_|
           @logger.debug { "from: #{origin} → #{hash[origin_]}, to: #{destination} → #{hash[destination_]}" }
           retrieve_schedule(from: hash[origin_], to: hash[destination_], time: time)
             .fmap do |times|
