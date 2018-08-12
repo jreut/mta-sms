@@ -2,26 +2,26 @@ require 'logger'
 
 require 'roda'
 
-require 'dummy_station_list'
-require 'dummy_timetable'
 require 'fuzzy'
 require 'intent/retrieve_favorite'
 require 'intent/save_favorite'
 require 'intent/search'
-require 'scrape'
-require 'station_list'
+require 'station_list/dummy'
+require 'station_list/scrape'
+require 'timetable/dummy'
+require 'timetable/scrape'
 
 LOGGER = Logger.new(STDERR)
 FAVORITES = {}
 
 if ENV['ONLINE']
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (truthy)")
-  STATIONS = StationList.new(logger: LOGGER).call.value_or { {} }
-  SOURCE = Scrape.new logger: LOGGER, stations: STATIONS
+  STATIONS = StationList::Scrape.new(logger: LOGGER).call.value_or { {} }
+  TIMETABLE = Timetable::Scrape.new logger: LOGGER, stations: STATIONS
 else
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (falsy)")
-  SOURCE = DummyTimetable.new
-  STATIONS = DummyStationList.new.call.value!
+  TIMETABLE = Timetable::Dummy.new
+  STATIONS = StationList::Dummy.new.call.value!
 end
 
 class App < Roda
@@ -38,11 +38,11 @@ class App < Roda
           sender: r.params['From'],
           body: r.params['Body'],
           map: FAVORITES,
-          source: SOURCE,
+          source: TIMETABLE,
         ),
         Intent::Search.new(
           body: r.params['Body'],
-          source: SOURCE,
+          source: TIMETABLE,
         ),
       ]
         .detect(&:match?)
