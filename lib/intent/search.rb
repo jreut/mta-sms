@@ -22,7 +22,8 @@ module Intent
 
       origin, destination = @body.split(SPLIT_PATTERN).map(&:strip)
       @source.(
-        origin: origin, destination: destination,
+        origin: origin,
+        destination: destination,
         time: now,
       ).fmap do |timetable|
         TimetablePresenter.new(timetable: timetable, now: now).call

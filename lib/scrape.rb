@@ -27,8 +27,11 @@ class Scrape
                 times: times,
               }
             end
-        end.or { Failure("Could not find station for '#{destination}'") }
-      end.or { Failure("Could not find station for '#{origin}'") }
+        end
+          .or { Failure("Could not find station for '#{destination}'") }
+      end
+        .or { Failure("Could not find station for '#{origin}'") }
+        .or { |error| Success(error) }
   end
 
   private
