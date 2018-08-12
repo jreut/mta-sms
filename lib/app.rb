@@ -1,5 +1,6 @@
 require 'logger'
 
+require 'dry/monads/maybe'
 require 'roda'
 
 require 'fuzzy'
@@ -20,14 +21,14 @@ if ENV['ONLINE']
   TIMETABLE = Timetable::Scrape.new logger: LOGGER, stations: STATIONS
 else
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (falsy)")
-  TIMETABLE = Timetable::Dummy.new
   STATIONS = StationList::Dummy.new.call.value!
+  TIMETABLE = Timetable::Dummy.new
 end
 
 class App < Roda
   route do |r|
     r.post do
-      [
+      intents = [
         Intent::SaveFavorite.new(
           sender: r.params['From'],
           body: r.params['Body'],
@@ -45,8 +46,8 @@ class App < Roda
           source: TIMETABLE,
         ),
       ]
-        .detect(&:match?)
-        .call
+      Dry::Monads::Maybe(intents.detect(&:match?))
+        .bind(&:call)
         .value_or(nil)
     end
   end
