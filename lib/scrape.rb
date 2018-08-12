@@ -9,17 +9,17 @@ require 'http'
 class Scrape
   include Dry::Monads::Result::Mixin
 
-  def initialize(logger:)
+  def initialize(logger:, stations:)
     @logger = logger
+    @stations = stations
+    @haystack = Fuzzy.new strings: stations.keys
   end
 
   def call(origin:, destination:, time:)
-    retrieve_station_list.bind do |hash|
-      haystack = Fuzzy.new strings: hash.keys
-      haystack.(origin).bind do |origin_|
-        haystack.(destination).bind do |destination_|
-          @logger.debug { "from: #{origin} → #{hash[origin_]}, to: #{destination} → #{hash[destination_]}" }
-          retrieve_schedule(from: hash[origin_], to: hash[destination_], time: time)
+      @haystack.(origin).bind do |origin_|
+        @haystack.(destination).bind do |destination_|
+          @logger.debug { "from: #{origin} → #{@stations[origin_]}, to: #{destination} → #{@stations[destination_]}" }
+          retrieve_schedule(from: @stations[origin_], to: @stations[destination_], time: time)
             .fmap do |times|
               {
                 from: origin_,
@@ -29,27 +29,9 @@ class Scrape
             end
         end.or { Failure("Could not find station for '#{destination}'") }
       end.or { Failure("Could not find station for '#{origin}'") }
-    end
   end
 
   private
-
-  def retrieve_station_list
-    return Success(@dict) if instance_variable_defined? :@dict
-    uri = URI('http://as0.mta.info/mnr/schedules/sched_form.cfm')
-    Http.get(uri).fmap do |response|
-      Nokogiri::HTML(response.body)
-        .xpath('//*[@id="Vorig_station"]/option')
-        .each_with_object({}) do |option, hash|
-          hash[option.text] = option['value']
-        end
-    end.fmap do |response|
-      @dict = response
-    end.or do |response|
-      @logger.error { response.inspect }
-      Failure('Error fetching station list')
-    end
-  end
 
   def retrieve_schedule(from:, to:, time:)
     uri = URI('http://as0.mta.info/mnr/schedules/sched_results.cfm?n=y')

@@ -1,22 +1,32 @@
+require 'tzinfo'
+
+require 'timetable_presenter'
+
 module Intent
   class Search
-    def initialize(body:)
+    SPLIT_PATTERN = %r{[./]}
+
+    def initialize(body:, source:)
       @body = body
+      @source = source
     end
 
-    def call(response:)
+    def match?
+      @body.match? SPLIT_PATTERN
+    end
+
+    def call
       # the MTA Web site always expects this time zone
       tz = TZInfo::Timezone.get 'America/New_York'
       now = tz.utc_to_local Time.now.utc
 
-      response['Content-Type'] = 'text/plain'
-      origin, destination = @body.split(%r{[./]}).map(&:strip)
-      TIMETABLE.(
+      origin, destination = @body.split(SPLIT_PATTERN).map(&:strip)
+      @source.(
         origin: origin, destination: destination,
         time: now,
       ).fmap do |timetable|
         TimetablePresenter.new(timetable: timetable, now: now).call
-      end.value_or(&:itself)
+      end
     end
   end
 end
