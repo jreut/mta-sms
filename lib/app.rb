@@ -5,9 +5,11 @@ require 'tzinfo'
 
 require 'timetable_presenter'
 
+LOGGER = Logger.new(STDERR)
+
 if ENV['ONLINE']
   require 'scrape'
-  TIMETABLE = Scrape.new
+  TIMETABLE = Scrape.new logger: LOGGER
 else
   require 'dummy_timetable'
   TIMETABLE = DummyTimetable.new
@@ -15,8 +17,6 @@ end
 
 class App < Roda
   route do |r|
-    @logger = Logger.new(STDERR)
-
     r.on 'search' do
       # the MTA Web site always expects this time zone
       tz = TZInfo::Timezone.get 'America/New_York'
