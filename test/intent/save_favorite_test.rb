@@ -57,8 +57,8 @@ module Intent
       )
 
       intent.call
-        .fmap { flunk }
-        .or do |response|
+        .or { flunk }
+        .fmap do |response|
           assert_equal "Could not find station for '#{from}'", response
         end
     end
@@ -79,8 +79,8 @@ module Intent
       )
 
       intent.call
-        .fmap { flunk }
-        .or do |response|
+        .or { flunk }
+        .fmap do |response|
           assert_equal "Could not find station for '#{to}'", response
         end
     end

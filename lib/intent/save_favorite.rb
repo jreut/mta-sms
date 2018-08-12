@@ -18,15 +18,15 @@ module Intent
     def call
       %r{(save|\+)\s+(?<from>[^/]+)/(?<to>[^/]+)}.match(@body) do |m|
         @fuzzy.(m[:from].strip)
-          .or { Failure(fuzzy_failure(m[:from].strip)) }
           .bind do |from|
             @fuzzy.(m[:to].strip)
-              .or { Failure(fuzzy_failure(m[:to].strip)) }
               .bind do |to|
                 @map[@sender] = { from: from, to: to }
                 Success(happy(from, to))
               end
+              .or { Success(fuzzy_failure(m[:to].strip)) }
           end
+          .or { Success(fuzzy_failure(m[:from].strip)) }
       end
     end
 
