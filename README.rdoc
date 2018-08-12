@@ -45,8 +45,6 @@ developer account I haven't been able to access any Metro-North data.
 
 - make fuzzy station searching real, ie. maybe use something a little better than the <tt>did_you_mean</tt> gem
 
-- add error handling for malformed messages or for when the MTA Web site is down
-
 - rate limit by phone number
 
 - add a "favorites" feature so you don't have to type over and over again, ideally you could say, "inbound" or "outbound" and get your desired station pairs
