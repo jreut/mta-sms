@@ -2,7 +2,9 @@
 
 == DESCRIPTION
 
-mta-sms is an HTTP server with a Twilio SMS endpoint that looks up MTA Metro-North Railroad timetables.
+mta-sms is an HTTP server that looks up MTA Metro-North Railroad timetables.
+Its single endpoint responds to requests like the ones Twilio sends for
+incoming SMS messages (https://www.twilio.com/docs/sms/twiml).
 
 == SYNOPSIS
 
@@ -10,21 +12,66 @@ Run the server with <tt>rackup</tt>
 
   ONLINE=true bundle exec rackup
 
-== ROUTES
+== INTENTS
 
-=== <tt>POST /search/twilio</tt>
+This server responds to all POST requests the same way. Messages are routed to one of several "intents" based on the contents of the message. An intent represents one complete interaction with this server, including any text message response.
 
-This endpoint is a webhook for Twilio incoming messages
-(https://www.twilio.com/docs/sms/twiml). Right now, this endpoint only inspects
-the <tt>Body</tt> parameter. The message body should contain two Metro-North station
-names separated by a non-alphanumeric character. For example, this cURL command
-line is well-formed:
+=== Search
 
-  curl localhost/search/twilio --data 'Body=ludlow / spuyten duyvil'
+The message body should contain two Metro-North station names separated by a
+<tt>'/'</tt> (forward slash) character. For example, this cURL command line is
+well-formed:
 
-This endpoint does some basic fuzzy searching of the station names given on
-this MTA Web page: http://as0.mta.info/mnr/schedules/sched_form.cfm, so you
-could do something like <tt>'Body=ludl / spn dvl'</tt>.
+  curl localhost/ --data 'Body=ludlow / spuyten duyvil'
+
+This intent does some fuzzy searching of the station names given on this MTA
+Web page: http://as0.mta.info/mnr/schedules/sched_form.cfm, so you could do
+something like <tt>'Body=ludl / sptn dvl'</tt>.
+
+If successful, the response is a <tt>text/plain</tt> message listing the
+upcoming trains between the given stations.
+
+=== SaveFavorite
+
+The message body should start either with the word <tt>'save'</tt> or the
+<tt>'+'</tt> (plus) character, followed by a station pair as described in the
+Search intent. After looking up the canonical station names, this intent stores
+this station pair in a dictionary keyed by the <tt>Sender</tt> request
+parameter. For example, this cURL command line is well-formed:
+
+  curl localhost/
+    --data 'Sender=3528625309'
+    --data-urlencode 'Body=+ new haven / grand central'
+
+If successful, the response is a <tt>text/plain</tt> message lising the station
+pair that was saved.
+
+=== RetrieveFavorite
+
+The message body should either be the word <tt>'in'</out> or <tt>'out'</tt>.
+This intent looks up a previously-saved station pair by the <tt>Sender</tt>
+request parameter and executes the Search intent on it. If the body is
+<tt>'in'</tt>, the search is performed using the order in which the favorite
+was saved. If the body is <tt>'out'</tt>, the search is performed with that
+order reversed.
+
+For example:
+
+  curl localhost/
+    --data 'Sender=3528675309'
+    --data 'Body=save spuyten duyvil / grand central'
+  #=> Saved favorite: SPUYTEN DUYVIL -> GRAND CENTRAL
+
+  curl localhost/
+    --data 'Sender=3528675309'
+    --data 'Body=in'
+  #=> SPUYTEN DUYVIL -> GRAND CENTRAL [...]
+
+  curl localhost/
+    --data 'Sender=3528675309'
+    --data 'Body=out'
+  #=> GRAND CENTRAL -> SPUYTEN DUYVIL [...]
+
 
 == ENVIRONMENT
 
