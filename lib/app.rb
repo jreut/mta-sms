@@ -14,37 +14,40 @@ require 'station_list'
 LOGGER = Logger.new(STDERR)
 FAVORITES = {}
 
+if ENV['ONLINE']
+  LOGGER.debug("ONLINE=#{ENV['ONLINE']} (truthy)")
+  SOURCE = Scrape.new logger: LOGGER, stations: @stations
+  STATIONS = StationList.new(logger: LOGGER).call.value_or { {} }
+else
+  LOGGER.debug("ONLINE=#{ENV['ONLINE']} (falsy)")
+  SOURCE = DummyTimetable.new
+  STATIONS = DummyStationList.new.call.value!
+end
+
 class App < Roda
   route do |r|
-    if ENV['ONLINE']
-      LOGGER.debug("ONLINE=#{ENV['ONLINE']} (truthy)")
-      @source = Scrape.new logger: LOGGER, stations: @stations
-      @stations = StationList.new(logger: LOGGER).call.value_or { {} }
-    else
-      LOGGER.debug("ONLINE=#{ENV['ONLINE']} (falsy)")
-      @source = DummyTimetable.new
-      @stations = DummyStationList.new.call.value!
-    end
-
     r.post do
       [
         Intent::SaveFavorite.new(
           sender: r.params['From'],
           body: r.params['Body'],
           map: FAVORITES,
-          fuzzy: Fuzzy.new(strings: @stations.keys),
+          fuzzy: Fuzzy.new(strings: STATIONS.keys),
         ),
         Intent::RetrieveFavorite.new(
           sender: r.params['From'],
           body: r.params['Body'],
           map: FAVORITES,
-          source: @source
+          source: SOURCE,
         ),
         Intent::Search.new(
           body: r.params['Body'],
-          source: @source,
+          source: SOURCE,
         ),
-      ].detect(&:match?).call.value_or(&:itself)
+      ]
+        .detect(&:match?)
+        .call
+        .value_or { |e| "Error: #{e}" }
     end
   end
 end
