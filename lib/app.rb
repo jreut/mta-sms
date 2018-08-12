@@ -25,13 +25,12 @@ class App < Roda
       r.post 'twilio' do
         response['Content-Type'] = 'text/plain'
         origin, destination = r.params['Body'].split(%r{[^[:alnum:][:space:]]+}).map(&:strip)
-        timetable = TIMETABLE.(
-          origin: origin,
-          destination: destination,
+        TIMETABLE.(
+          origin: origin, destination: destination,
           time: @now,
-        )
-        response.status = 200
-        TimetablePresenter.new(timetable: timetable, now: @now).call
+        ).fmap do |timetable|
+          TimetablePresenter.new(timetable: timetable, now: @now).call
+        end.value_or(&:itself)
       end
     end
   end

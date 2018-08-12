@@ -1,4 +1,8 @@
+require 'dry/monads/result'
+
 class DummyTimetable
+  include Dry::Monads::Result::Mixin
+
   def initialize(length: 10)
     @offsets = Array.new(length) { |i| i - length / 2 }
   end
@@ -12,10 +16,10 @@ class DummyTimetable
       }
     end
 
-    {
+    Success(
       from: origin.upcase,
       to: destination.upcase,
       times: times,
-    }
+    )
   end
 end

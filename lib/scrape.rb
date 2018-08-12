@@ -1,53 +1,58 @@
 #!/usr/bin/env ruby
 
-require 'net/http'
-
 require 'nokogiri'
+require 'dry/monads/result'
 
 require 'prefix_checker'
+require 'http'
 
 class Scrape
+  include Dry::Monads::Result::Mixin
+
+  def initialize(logger:)
+    @logger = logger
+  end
+
   def call(origin:, destination:, time:)
-    hash = get
-    checker = PrefixChecker.new dictionary: hash.keys
-    corrected_origin = checker.correct(origin.upcase).first
-    corrected_destination = checker.correct(destination.upcase).first
-    origin_id = hash[corrected_origin]
-    destination_id = hash[corrected_destination]
-    if origin_id.nil? or destination_id.nil?
-      nil
-    else
-      response = post from: origin_id, to: destination_id, time: time
-      times = table response.body
-      {
-        from: corrected_origin,
-        to: corrected_destination,
-        times: times,
-      }
+    retrieve_station_list.bind do |hash|
+      checker = PrefixChecker.new dictionary: hash.keys
+      checker.(origin.upcase).bind do |origin_|
+        checker.(destination.upcase).bind do |destination_|
+          @logger.debug { "from: #{origin} → #{hash[origin_]}, to: #{destination} → #{hash[destination_]}" }
+          retrieve_schedule(from: hash[origin_], to: hash[destination_], time: time)
+            .fmap do |times|
+              {
+                from: origin_,
+                to: destination_,
+                times: times,
+              }
+            end
+        end.or { Failure("Could not find station for '#{destination}'") }
+      end.or { Failure("Could not find station for '#{origin}'") }
     end
   end
 
   private
 
-  def get
-    return @dict if instance_variable_defined? :@dict
+  def retrieve_station_list
+    return Success(@dict) if instance_variable_defined? :@dict
     uri = URI('http://as0.mta.info/mnr/schedules/sched_form.cfm')
-    body = Net::HTTP.get(uri)
-    doc = Nokogiri::HTML(body)
-    xpath = '//*[@id="Vorig_station"]'
-    @dict = doc
-      .xpath(xpath+'/option')
-      .each_with_object({}) do |option, hash|
-        hash[option.text] = option['value']
-      end
-    @dict
+    Http.get(uri).fmap do |response|
+      Nokogiri::HTML(response.body)
+        .xpath('//*[@id="Vorig_station"]/option')
+        .each_with_object({}) do |option, hash|
+          hash[option.text] = option['value']
+        end
+    end.fmap do |response|
+      @dict = response
+    end.or do |response|
+      @logger.error { response.inspect }
+      Failure('Error fetching station list')
+    end
   end
 
-  def post(from:, to:, time:)
+  def retrieve_schedule(from:, to:, time:)
     uri = URI('http://as0.mta.info/mnr/schedules/sched_results.cfm?n=y')
-    headers = {
-      'Content-Type' => 'application/x-www-form-urlencoded',
-    }
     params = {
       'orig_id' => from,
       'dest_id' => to,
@@ -57,11 +62,15 @@ class Scrape
       'SelAMPM1' => time.strftime('%p'),
       'cmdschedule' => 'see+schedule'
     }
-    data = URI.encode_www_form(params)
-    Net::HTTP.post(uri, data, headers)
+    Http.post(uri, URI.encode_www_form(params))
+      .fmap { |response| parse_table response.body }
+      .or do |response|
+        @logger.error { response.inspect }
+        Failure('Error retreiving schedule')
+      end
   end
 
-  def table(body)
+  def parse_table(body)
     Nokogiri::HTML(body)
       .xpath('/html/body/div/div[3]/form[2]/div[3]/table[2]/tr')
       .drop(1) # the table's header is a <tr>
