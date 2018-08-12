@@ -26,6 +26,8 @@ else
 end
 
 class App < Roda
+  plugin :default_headers, 'Content-Type' => 'text/plain'
+
   route do |r|
     r.post do
       intents = [
