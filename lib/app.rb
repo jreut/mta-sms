@@ -47,7 +47,7 @@ class App < Roda
       ]
         .detect(&:match?)
         .call
-        .value_or { |e| "Error: #{e}" }
+        .value_or(nil)
     end
   end
 end
