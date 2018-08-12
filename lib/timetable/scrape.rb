@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
-require 'nokogiri'
 require 'dry/monads/result'
+require 'nokogiri'
+require 'tzinfo'
 
 require 'fuzzy'
 require 'http'
@@ -43,9 +44,9 @@ module Timetable
         'orig_id' => from,
         'dest_id' => to,
         'Filter_id' => 1,
-        'traveldate' => time.strftime('%m-%d-%Y'),
-        'Time_id' => time.strftime('%I:%M'),
-        'SelAMPM1' => time.strftime('%p'),
+        'traveldate' => format_from_utc(time, '%m-%d-%Y'),
+        'Time_id' => format_from_utc(time, '%I:%M'),
+        'SelAMPM1' => format_from_utc(time, '%p'),
         'cmdschedule' => 'see+schedule'
       }
       Http.post(uri, URI.encode_www_form(params))
@@ -66,12 +67,25 @@ module Timetable
             nil
           else
             {
-              start: Time.strptime(start.content.strip, '%I:%M %p'),
-              stop: Time.strptime(stop.content.strip, '%I:%M %p'),
+              start: parse_to_utc(start.content.strip, '%I:%M %p'),
+              stop: parse_to_utc(stop.content.strip, '%I:%M %p'),
             }
           end
         end
         .compact
+    end
+
+    def format_from_utc(time, format)
+      # the MTA always expects this zone
+      @tz ||= TZInfo::Timezone.get 'America/New_York'
+      @tz.utc_to_local(time.utc).strftime(format)
+    end
+
+    def parse_to_utc(string, format)
+      # the MTA is always in this zone
+      @tz ||= TZInfo::Timezone.get 'America/New_York'
+      time = Time.strptime string, format
+      @tz.local_to_utc time
     end
   end
 end

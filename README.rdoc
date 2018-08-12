@@ -96,6 +96,3 @@ developer account I haven't been able to access any Metro-North data.
 - allow searching arbitrary times in the future
 
 - use a programmatic API instead of scraping HTML
-
-- handle queries spanning two days, perhaps by making two separate requests to
-  the MTA site
