@@ -17,7 +17,7 @@ FAVORITES = {}
 
 if ENV['ONLINE']
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (truthy)")
-  STATIONS = StationList::Scrape.new(logger: LOGGER).call.value_or { {} }
+  STATIONS = StationList::Scrape.new(logger: LOGGER).call.value!
   TIMETABLE = Timetable::Scrape.new logger: LOGGER, stations: STATIONS
 else
   LOGGER.debug("ONLINE=#{ENV['ONLINE']} (falsy)")
