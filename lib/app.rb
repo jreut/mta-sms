@@ -22,15 +22,6 @@ class App < Roda
       tz = TZInfo::Timezone.get 'America/New_York'
       @now = tz.utc_to_local Time.now.utc
 
-      r.get do
-        timetable = TIMETABLE.(
-          origin: r.params['origin'],
-          destination: r.params['destination'],
-          time: @now,
-        )
-        TimetablePresenter.new(timetable: timetable, now: @now).call
-      end
-
       r.post 'twilio' do
         response['Content-Type'] = 'text/plain'
         origin, destination = r.params['Body'].split(%r{[^[:alnum:][:space:]]+}).map(&:strip)
